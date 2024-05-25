@@ -3,7 +3,7 @@
 # import tensorflow as tf
 # import cv2
 # from sklearn.model_selection import train_test_split
-
+import cv2
 # my_dic = {
 #     'Five Finger': 0,
 #     'Scissors': 1,
@@ -45,63 +45,75 @@
 
 import numpy as np
 import tensorflow as tf
+import cv2
 import matplotlib.pyplot as plt
-
-img = "1-color.jpg"
-img = np.uint8(np.dot(img, [0.33, 0.33, 0.34]))
-print(img.shape)
-# plt.imshow(img, cmap ='gray')
-# plt.show()
-
-l1 = 28 / img.shape[0]
-l2 = 28 / img.shape[1]
-new_img = np.zeros((28, 28))
-for x in range(28):
-    for y in range(28):
-        new_img[x][y] = img[int(x / l1)][int(y / l2)]
-new_img = 255 - new_img
-# plt.imshow(new_img, cmap ='gray')
-# plt.show()
-z = np.array(new_img)
-z = z.reshape((1, 28, 28))
+from keras.src.saving import load_model
 
 # Load the data
-x_train = np.load('X_train.npy')
-x_test = np.load('X_test.npy')
-y_train = np.load('y_train.npy')
-y_test = np.load('y_test.npy')
+# x_train = np.load('X_train.npy')
+# x_test = np.load('X_test.npy')
+# y_train = np.load('y_train.npy')
+# y_test = np.load('y_test.npy')
 
 # Normalize the data
-x_train = (x_train / 255.0)
-x_test = x_test / 255.0
+# x_train = x_train / 255.0
+# x_test = x_test / 255.0
+#
+# # Define the model
+# model = tf.keras.models.Sequential([
+#     tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(64, 64, 3)),
+#     tf.keras.layers.MaxPooling2D((2, 2)),
+#     tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+#     tf.keras.layers.MaxPooling2D((2, 2)),
+#     tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
+#     tf.keras.layers.MaxPooling2D((2, 2)),
+#     tf.keras.layers.Flatten(),
+#     tf.keras.layers.Dense(128, activation='relu'),
+#     tf.keras.layers.Dropout(0.5),
+#     tf.keras.layers.Dense(11, activation='softmax')
+# ])
+#
+# # Compile the model
+# model.compile(optimizer='adam',
+#               loss='sparse_categorical_crossentropy',
+#               metrics=['accuracy'])
+#
+# # Train the model
+# model.fit(x_train, y_train, epochs=10)
 
-# Define the model
-model = tf.keras.models.Sequential([
-    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
-    tf.keras.layers.MaxPooling2D((2, 2)),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dropout(0.5),
-    tf.keras.layers.Dense(11, activation='softmax')
-])
+# model.save('gesture_model.h5')
 
-# Compile the model
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+model = load_model('gesture_model.h5')
 
-# Train the model
-model.fit(x_train, y_train, epochs=10)
+# Preprocess the new image
+img = cv2.imread("3-color.png")
+img = cv2.resize(img, (64, 64))
+img = img / 255.0  # Normalize
 
-# Evaluate the model
-predictions = model.predict([z])
-# print(f'true value: {y_train[n]}')
-print(predictions[0])
-print(f'predicted value: {np.argmax(predictions[0])}')
-plt.title()
-plt.imshow(z[0], cmap='gray')
+
+# Make predictions
+predictions = model.predict(np.array([img]))
+
+# Get the predicted class label
+predicted_label = np.argmax(predictions[0])
+
+# Map the label to gesture
+gesture_map = {
+    0: 'Five Finger',
+    1: 'Scissors',
+    2: 'Rock',
+    3: 'Taxi',
+    4: 'Four Finger',
+    5: 'Devil',
+    6: 'Nice',
+    7: 'PePe',
+    8: 'Three Finger',
+    9: 'One Finger',
+    10: 'Stop'
+}
+
+# Display the result
+print("Predicted Gesture:", gesture_map[predicted_label])
+plt.imshow(img)
+plt.title("Predicted Gesture: " + gesture_map[predicted_label])
 plt.show()
